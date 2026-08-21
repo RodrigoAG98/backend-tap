@@ -352,6 +352,45 @@
                 ]
             }
         },
+        "/api/products/pdf": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Exportar o visualizar productos en formato PDF",
+                "operationId": "627a36218e6f4b3cb8e7d0fcb960894d",
+                "responses": {
+                    "200": {
+                        "description": "Documento PDF generado exitosamente",
+                        "headers": {
+                            "Content-Disposition": {
+                                "description": "Indica si se visualiza o se descarga el archivo",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "inline; filename=\"users-14:30.pdf\""
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/profiles": {
             "get": {
                 "tags": [
@@ -601,6 +640,45 @@
                         "description": "Respuesta con usuarios en un xlsx",
                         "content": {
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/profiles/pdf": {
+            "get": {
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "Exportar o visualizar perfiles en formato PDF",
+                "operationId": "ddd7c5cc1b477f1ae3bbc44b6e1c5e8e",
+                "responses": {
+                    "200": {
+                        "description": "Documento PDF generado exitosamente",
+                        "headers": {
+                            "Content-Disposition": {
+                                "description": "Indica si se visualiza o se descarga el archivo",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "inline; filename=\"users-14:30.pdf\""
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/pdf": {
                                 "schema": {
                                     "type": "string",
                                     "format": "binary"
@@ -879,6 +957,45 @@
                         "description": "Respuesta con usuarios en un xlsx",
                         "content": {
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/pdf": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Exportar o visualizar usuarios en formato PDF",
+                "operationId": "8b0516f9613f9754d1e48b52ef186354",
+                "responses": {
+                    "200": {
+                        "description": "Documento PDF generado exitosamente",
+                        "headers": {
+                            "Content-Disposition": {
+                                "description": "Indica si se visualiza o se descarga el archivo",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "attachment; filename=\"users-14:30.pdf\""
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/pdf": {
                                 "schema": {
                                     "type": "string",
                                     "format": "binary"

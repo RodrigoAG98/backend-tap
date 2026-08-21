@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Exports\GeneralExport;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProductController extends Controller
 {
@@ -299,5 +300,60 @@ class ProductController extends Controller
         })->toArray();
 
         return Excel::download(new GeneralExport($headers, $products), sprintf('productos-%s.xlsx',now()->format('H:i')));
+    }
+
+    #[OA\Get(
+        path: '/api/products/pdf',
+        summary: 'Exportar o visualizar productos en formato PDF',
+        tags: ['Products'],
+        security: [
+            ['bearerAuth' => []]
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Documento PDF generado exitosamente',
+                headers: [
+                    new OA\Header(
+                        header: 'Content-Disposition',
+                        description: 'Indica si se visualiza o se descarga el archivo',
+                        schema: new OA\Schema(type: 'string', example: 'inline; filename="users-14:30.pdf"')
+                    )
+                ],
+                content: new OA\MediaType(
+                    mediaType: 'application/pdf',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            )
+        ]
+    )]
+    public function pdf()
+    {
+        $data = [
+            'title' => 'Productos',
+            'headers' => ['Código del producto', 'Nombre del producto', 'Precio', 'Fecha de creación'],
+            'items' => []
+        ];
+        $data['width'] = 100 / count($data['headers']);
+
+        $data['items'] = Product::get()->map(function($product){
+            return [
+                'product_code' => $product->product_code,
+                'name' => $product->name,
+                'price' => $product->price,
+                'created_at' => Carbon::parse($product->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        $pdf = Pdf::loadView('pdf', compact('data'));
+
+        return $pdf->stream(sprintf('productos-%s.pdf',now()->format('H:i')));
     }
 }

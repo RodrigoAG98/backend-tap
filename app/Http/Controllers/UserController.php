@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Exports\GeneralExport;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
@@ -315,5 +316,60 @@ class UserController extends Controller
         })->toArray();
 
         return Excel::download(new GeneralExport(headers: $headers, items: $users), sprintf('users-%s.xlsx',now()->format('H:i')));
+    }
+
+    #[OA\Get(
+        path: '/api/users/pdf',
+        summary: 'Exportar o visualizar usuarios en formato PDF',
+        tags: ['Users'],
+        security: [
+            ['bearerAuth' => []]
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Documento PDF generado exitosamente',
+                headers: [
+                    new OA\Header(
+                        header: 'Content-Disposition',
+                        description: 'Indica si se visualiza o se descarga el archivo',
+                        schema: new OA\Schema(type: 'string', example: 'inline; filename="users-14:30.pdf"')
+                    )
+                ],
+                content: new OA\MediaType(
+                    mediaType: 'application/pdf',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            )
+        ]
+    )]
+    public function pdf()
+    {
+        $data = [
+            'title' => 'Usarios',
+            'headers' => ['Código de usuario', 'Usuario', 'Nombre', 'Fecha de creación'],
+            'items' => []
+        ];
+        $data['width'] = 100 / count($data['headers']);
+
+        $data['items'] = User::get()->map(function($user){
+            return [
+                'user_code' => $user->user_code,
+                'user' => $user->user,
+                'name' => $user->name,
+                'created_at' => Carbon::parse($user->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        $pdf = Pdf::loadView('pdf', compact('data'));
+
+        return $pdf->stream(sprintf('users-%s.pdf',now()->format('H:i')));
     }
 }

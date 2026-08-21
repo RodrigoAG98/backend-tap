@@ -9,6 +9,7 @@ use OpenApi\Attributes as OA;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use App\Exports\GeneralExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProfileController extends Controller
 {
@@ -282,5 +283,59 @@ class ProfileController extends Controller
         })->toArray();
 
         return Excel::download(new GeneralExport($headers, $profiles), sprintf('perfiles-%s.xlsx',now()->format('H:i')));
+    }
+
+    #[OA\Get(
+        path: '/api/profiles/pdf',
+        summary: 'Exportar o visualizar perfiles en formato PDF',
+        tags: ['Profiles'],
+        security: [
+            ['bearerAuth' => []]
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Documento PDF generado exitosamente',
+                headers: [
+                    new OA\Header(
+                        header: 'Content-Disposition',
+                        description: 'Indica si se visualiza o se descarga el archivo',
+                        schema: new OA\Schema(type: 'string', example: 'inline; filename="users-14:30.pdf"')
+                    )
+                ],
+                content: new OA\MediaType(
+                    mediaType: 'application/pdf',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            )
+        ]
+    )]
+    public function pdf()
+    {
+        $data = [
+            'title' => 'Perfiles',
+            'headers' => ['Código del perfil', 'Nombre', 'Fecha de creación'],
+            'items' => []
+        ];
+        $data['width'] = 100 / count($data['headers']);
+
+         $data['items'] = Profile::get()->map(function($profile){
+            return [
+                'profile_code' => $profile->profile_code,
+                'name' => $profile->name,
+                'created_at' => Carbon::parse($profile->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        $pdf = Pdf::loadView('pdf', compact('data'));
+
+        return $pdf->stream(sprintf('perfiles-%s.pdf',now()->format('H:i')));
     }
 }
