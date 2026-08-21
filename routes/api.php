@@ -12,7 +12,16 @@ Route::post('/login', [AuthController::class, 'login']);
 //Rutas protegidas
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::prefix('users')->name('users.')->controller(UserController::class)->group(function(){
+        Route::get('export','export')->name('export');
+    });
     Route::apiResource('users',UserController::class);
+    Route::prefix('products')->name('products.')->controller(ProductController::class)->group(function(){
+        Route::get('export','export')->name('export');
+    });
     Route::apiResource('products',ProductController::class);
+    Route::prefix('profiles')->name('profiles.')->controller(ProfileController::class)->group(function(){
+        Route::get('export','export')->name('export');
+    });
     Route::apiResource('profiles',ProfileController::class);
 });

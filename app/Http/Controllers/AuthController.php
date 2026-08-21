@@ -22,13 +22,13 @@ class AuthController extends Controller
                         property: 'user',
                         type: 'string',
                         format: 'email',
-                        example: 'user@example.com'
+                        example: 'admin@tap.com'
                     ),
                     new OA\Property(
                         property: 'password',
                         type: 'string',
                         format: 'password',
-                        example: 'secret123'
+                        example: 'password'
                     ),
                 ]
             )
@@ -36,7 +36,13 @@ class AuthController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Token generado con éxito'
+                description: 'Token generado con éxito',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'token', type: 'string', example: '1|laravel_sanctum_token_here'),
+                        new OA\Property(property: 'token_type', type: 'string', example: 'Bearer')
+                    ]
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -51,7 +57,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('user', $request->user)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Credenciales incorrectas'], 401);
@@ -75,7 +81,8 @@ class AuthController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Sesión cerrada'
+                description: 'Sesión cerrada',
+                content: new OA\JsonContent()
             ),
         ]
     )]

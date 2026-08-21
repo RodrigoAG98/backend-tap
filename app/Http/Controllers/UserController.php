@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Models\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
+use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+use App\Exports\GeneralExport;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -19,7 +23,8 @@ class UserController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Respuesta con usuarios'
+                description: 'Respuesta con usuarios',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -71,12 +76,14 @@ class UserController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 201,
-                description: 'Usuario almacenado exitosamente'
+                response: 200,
+                description: 'Usuario almacenado exitosamente',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
-                description: 'No autorizado'
+                description: 'No autorizado',
+                content: new OA\JsonContent()
             ),
         ]
     )]
@@ -86,14 +93,15 @@ class UserController extends Controller
             'user' => 'required|unique:users,user',
             'name' => 'required|string',
             'telephone' => 'required|string',
+            'password' => 'sometimes|string',
         ]);
 
         $newUser = User::create([
-            'user_code' => sprintf('%s-%s', now()->format('H:i'), now()->format('Y')),
+            'user_code' => sprintf('%s-%s', now()->format('H-i'), now()->format('Y-m')),
             'user' => $data['user'],
             'name' => $data['name'],
             'telephone' => $request->input('telephone'),
-            'password' => Hash::make(sprintf('%s.%s', now()->format('Y'), strtolower($data['user']))),
+            'password' => $request->input('password', Hash::make(sprintf('%s.%s', now()->format('Y'), strtolower($data['user'])))),
         ]);
 
         return response()->json($newUser);
@@ -122,15 +130,16 @@ class UserController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Usuario encontrado'
+                description: 'Usuario encontrado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
-                description: 'No autorizado'
+                description: 'No autorizado',
             ),
             new OA\Response(
                 response: 404,
-                description: 'Usuario no encontrado'
+                description: 'Usuario no encontrado',
             ),
         ]
     )]
@@ -191,7 +200,8 @@ class UserController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Usuario actualizado'
+                description: 'Usuario actualizado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -206,7 +216,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'user' => 'required|unique:users,user',
+            'user' => ['required',Rule::unique('users')->ignore($user->id)],
             'name' => 'required|string',
             'telephone' => 'required|string',
         ]);
@@ -244,7 +254,8 @@ class UserController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Usuario eliminado'
+                description: 'Usuario eliminado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -263,5 +274,46 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json($msg);
+    }
+
+    #[OA\Get(
+        path: '/api/users/export',
+        summary: 'Exportar todos los usuarios',
+        tags: ['Users'],
+        security: [
+            ['bearerAuth' => []],
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Respuesta con usuarios en un xlsx',
+                content: new OA\MediaType(
+                    mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            ),
+        ]
+    )]
+    public function export()
+    {
+        $headers = ['Código de usuario', 'Usuario', 'Nombre', 'Fecha de creación'];
+
+        $users = User::get()->map(function($user){
+            return [
+                'user_code' => $user->user_code,
+                'user' => $user->user,
+                'name' => $user->name,
+                'created_at' => Carbon::parse($user->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        return Excel::download(new GeneralExport(headers: $headers, items: $users), sprintf('users-%s.xlsx',now()->format('H:i')));
     }
 }

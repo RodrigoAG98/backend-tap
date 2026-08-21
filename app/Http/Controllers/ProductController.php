@@ -6,6 +6,10 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
+use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+use App\Exports\GeneralExport;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -19,7 +23,8 @@ class ProductController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Respuesta con productos'
+                description: 'Respuesta con productos',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -66,8 +71,9 @@ class ProductController extends Controller
         ),
         responses: [
             new OA\Response(
-                response: 201,
-                description: 'Producto almacenado exitosamente'
+                response: 200,
+                description: 'Producto almacenado exitosamente',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -116,7 +122,8 @@ class ProductController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Producto encontrado'
+                description: 'Producto encontrado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -180,7 +187,8 @@ class ProductController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Usuario actualizado'
+                description: 'Usuario actualizado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -206,7 +214,7 @@ class ProductController extends Controller
             'price' => $data['price'],
         ]);
 
-        return response()->json($newProduct);
+        return response()->json($product);
     }
 
     #[OA\Delete(
@@ -250,5 +258,46 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->json($msg);
+    }
+
+    #[OA\Get(
+        path: '/api/products/export',
+        summary: 'Exportar todos los productos',
+        tags: ['Products'],
+        security: [
+            ['bearerAuth' => []],
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Respuesta con productos en un xlsx',
+                content: new OA\MediaType(
+                    mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            ),
+        ]
+    )]
+    public function export()
+    {
+        $headers = ['Código del producto', 'Nombre del producto', 'Precio', 'Fecha de creación'];
+
+        $products = Product::get()->map(function($product){
+            return [
+                'product_code' => $product->product_code,
+                'name' => $product->name,
+                'price' => $product->price,
+                'created_at' => Carbon::parse($product->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        return Excel::download(new GeneralExport($headers, $products), sprintf('productos-%s.xlsx',now()->format('H:i')));
     }
 }

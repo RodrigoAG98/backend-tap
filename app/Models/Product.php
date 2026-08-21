@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Product extends Model
 {
-    use HasUlids, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'mongodb';
     protected $collection = 'products';
 
-    public $incrementing = false;
+    protected $primaryKey = '_id';
 
     protected $keyType = 'string';
 
@@ -23,5 +22,14 @@ class Product extends Model
         'brand',
         'price',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Product $product) {
+            if (empty($product->id)) {
+                $product->id = (string) str()->ulid();
+            }
+        });
+    }
 
 }

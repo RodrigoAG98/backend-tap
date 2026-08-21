@@ -6,6 +6,9 @@ use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
+use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
+use App\Exports\GeneralExport;
 
 class ProfileController extends Controller
 {
@@ -19,7 +22,8 @@ class ProfileController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Respuesta con pefiles'
+                description: 'Respuesta con pefiles',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -47,22 +51,22 @@ class ProfileController extends Controller
                     new OA\Property(
                         property: 'name',
                         type: 'string',
-                        format: 'email',
-                        example: 'user@example.com'
+                        example: 'Administrador'
                     ),
                     new OA\Property(
                         property: 'sections',
                         type: 'array',
                         items: new OA\Items(type: 'string'),
-                        example: '[]'
+                        example: ['Users','Products','Profiles']
                     ),
                 ]
             )
         ),
         responses: [
             new OA\Response(
-                response: 201,
-                description: 'Perfil almacenado exitosamente'
+                response: 200,
+                description: 'Perfil almacenado exitosamente',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -78,7 +82,7 @@ class ProfileController extends Controller
         ]);
 
         $newProfile = Profile::create([
-            'profile_code' => sprintf('%s-%s', now('H:i'), Str::limit($data['name'])),
+            'profile_code' => sprintf('%s-%s', now()->format('H:i'), Str::limit($data['name'])),
             'name' => $data['name'],
             'sections' => $data['sections'],
         ]);
@@ -109,7 +113,8 @@ class ProfileController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Perfil encontrado'
+                description: 'Perfil encontrado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -153,14 +158,13 @@ class ProfileController extends Controller
                     new OA\Property(
                         property: 'name',
                         type: 'string',
-                        format: 'email',
-                        example: 'user@example.com'
+                        example: 'Administrador'
                     ),
                     new OA\Property(
                         property: 'sections',
                         type: 'array',
                         items: new OA\Items(type: 'string'),
-                        example: '[]'
+                        example: ['Users','Products','Profiles']
                     ),
                 ]
             )
@@ -168,7 +172,8 @@ class ProfileController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Perfil actualizado'
+                description: 'Perfil actualizado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -217,7 +222,8 @@ class ProfileController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Perfil eliminado'
+                description: 'Perfil eliminado',
+                content: new OA\JsonContent()
             ),
             new OA\Response(
                 response: 401,
@@ -236,5 +242,45 @@ class ProfileController extends Controller
         $profile->delete();
 
         return response()->json($msg);
+    }
+
+    #[OA\Get(
+        path: '/api/profiles/export',
+        summary: 'Exportar todos los perfiles',
+        tags: ['Profiles'],
+        security: [
+            ['bearerAuth' => []],
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Respuesta con usuarios en un xlsx',
+                content: new OA\MediaType(
+                    mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    schema: new OA\Schema(
+                        type: 'string',
+                        format: 'binary'
+                    )
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autorizado'
+            ),
+        ]
+    )]
+    public function export()
+    {
+        $headers = ['Código del perfil', 'Nombre', 'Fecha de creación'];
+
+        $profiles = Profile::get()->map(function($profile){
+            return [
+                'profile_code' => $profile->profile_code,
+                'name' => $profile->name,
+                'created_at' => Carbon::parse($profile->created_at)->format('d/m/Y H:i'),
+            ];
+        })->toArray();
+
+        return Excel::download(new GeneralExport($headers, $profiles), sprintf('perfiles-%s.xlsx',now()->format('H:i')));
     }
 }

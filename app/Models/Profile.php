@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Profile extends Model
 {
-    use HasUlids, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'mongodb';
     protected $collection = 'profiles';
 
-    public $incrementing = false;
+    protected $primaryKey = '_id';
 
     protected $keyType = 'string';
 
@@ -28,5 +27,14 @@ class Profile extends Model
         return [
             'sections'=> 'array'
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Profile $profile) {
+            if (empty($profile->id)) {
+                $profile->id = (string) str()->ulid();
+            }
+        });
     }
 }
