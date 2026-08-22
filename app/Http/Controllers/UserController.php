@@ -21,6 +21,18 @@ class UserController extends Controller
         security: [
             ['bearerAuth' => []],
         ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'juanito'
+                )
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
@@ -33,9 +45,15 @@ class UserController extends Controller
             ),
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::get());
+        $users = User::query();
+
+        if($request->query('search')){
+            $users->where('user','like',"%".$request->query('search')."%");
+        }
+
+        return response()->json($users->get());
     }
 
     #[OA\Post(
@@ -93,19 +111,22 @@ class UserController extends Controller
         $data = $request->validate([
             'user' => 'required|unique:users,user',
             'name' => 'required|string',
-            'telephone' => 'required|string',
+            'telephone' => 'nullable|phone:INTERNATIONAL',
             'password' => 'sometimes|string',
+        ],[
+            'user.required'=>'El usuario es obligatorio.',
+            'name.required'=>'El nombre es obligatorio.'
         ]);
 
         $newUser = User::create([
-            'user_code' => sprintf('%s-%s', now()->format('H-i'), now()->format('Y-m')),
+            'user_code' => bin2hex(random_bytes(5)),
             'user' => $data['user'],
-            'name' => $data['name'],
+            'name' => ucfirst(mb_strtolower($data['name'])),
             'telephone' => $request->input('telephone'),
             'password' => $request->input('password', Hash::make(sprintf('%s.%s', now()->format('Y'), strtolower($data['user'])))),
         ]);
 
-        return response()->json($newUser);
+        return response()->json('Usuario Almacenado exitosamente');
     }
 
     #[OA\Get(
@@ -219,18 +240,21 @@ class UserController extends Controller
         $data = $request->validate([
             'user' => ['required',Rule::unique('users')->ignore($user->id)],
             'name' => 'required|string',
-            'telephone' => 'required|string',
+            'telephone' => 'nullable|phone:INTERNATIONAL',
+        ],[
+            'user.required'=>'El usuario es obligatorio.',
+            'name.required'=>'El nombre es obligatorio.'
         ]);
 
         $user->update([
             'user' => $data['user'],
-            'name' => $data['name'],
+            'name' => ucfirst(mb_strtolower($data['name'])),
             'telephone' => $request->input('telephone'),
         ]);
 
         // TODO: almacenar foto de perfil
 
-        return response()->json($user);
+        return response()->json('Usuario actualizado');
     }
 
     #[OA\Delete(

@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::create([
-            'user_code' => sprintf('%s-%s', now()->format('H:i'), now()->format('Y')),
+            'user_code' => bin2hex(random_bytes(5)),
             'user' => 'admin@tap.com',
             'name' => 'Administrador',
             'password' => Hash::make('password'),

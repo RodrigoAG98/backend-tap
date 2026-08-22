@@ -39,7 +39,7 @@ class AuthController extends Controller
                 description: 'Token generado con éxito',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: 'token', type: 'string', example: '1|laravel_sanctum_token_here'),
+                        new OA\Property(property: 'access_token', type: 'string', example: '1|laravel_sanctum_token_here'),
                         new OA\Property(property: 'token_type', type: 'string', example: 'Bearer')
                     ]
                 )
