@@ -51,7 +51,8 @@ class UserController extends Controller
         $users = User::query();
 
         if($request->query('search')){
-            $users->where('user','like',"%".$request->query('search')."%");
+            $users->where('user','like',"%".$request->query('search')."%")
+                ->orWhere('name','like',"%".$request->query('search')."%");
         }
 
         return response()->json($users->get());

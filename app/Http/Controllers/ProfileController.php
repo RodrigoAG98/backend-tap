@@ -20,6 +20,17 @@ class ProfileController extends Controller
         security: [
             ['bearerAuth' => []],
         ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
@@ -32,9 +43,16 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Profile::get());
+        $profiles = Profile::query();
+
+        if($request->query('search')) {
+            $profiles->where('profile_code','like', '%'.$request->query('search').'%')
+                ->orWhere('name','like', '%'.$request->query('search').'%');
+        }
+
+        return response()->json($profiles->get());
     }
 
     #[OA\Post(
@@ -79,16 +97,16 @@ class ProfileController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string',
-            'sections' => 'required|array',
+            'sections' => 'nullable|array',
         ]);
 
         $newProfile = Profile::create([
-            'profile_code' => sprintf('%s-%s', now()->format('H:i'), Str::limit($data['name'])),
+            'profile_code' => bin2hex(random_bytes(5)),
             'name' => $data['name'],
             'sections' => $data['sections'],
         ]);
 
-        return response()->json($newProfile);
+        return response()->json('Usuario almacenado exitosamente');
     }
 
     #[OA\Get(
@@ -190,7 +208,7 @@ class ProfileController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string',
-            'sections' => 'required|array',
+            'sections' => 'nullable|array',
         ]);
 
         $profile->update([
@@ -198,7 +216,7 @@ class ProfileController extends Controller
             'sections' => $data['sections'],
         ]);
 
-        return response()->json($profile);
+        return response()->json('Perfil actualizado');
     }
 
     #[OA\Delete(
@@ -278,7 +296,7 @@ class ProfileController extends Controller
             return [
                 'profile_code' => $profile->profile_code,
                 'name' => $profile->name,
-                'created_at' => Carbon::parse($profile->created_at)->format('d/m/Y H:i'),
+                'created_at' => $profile->created_at,
             ];
         })->toArray();
 
@@ -330,7 +348,7 @@ class ProfileController extends Controller
             return [
                 'profile_code' => $profile->profile_code,
                 'name' => $profile->name,
-                'created_at' => Carbon::parse($profile->created_at)->format('d/m/Y H:i'),
+                'created_at' => $profile->created_at,
             ];
         })->toArray();
 

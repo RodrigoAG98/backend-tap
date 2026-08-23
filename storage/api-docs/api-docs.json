@@ -398,6 +398,17 @@
                 ],
                 "summary": "Obtener todos los perfiles",
                 "operationId": "43d12304c3e621ecce8cc9ccd4b3738e",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con pefiles",
