@@ -25,7 +25,8 @@ class Profile extends Model
     protected function casts(): array
     {
         return [
-            'sections'=> 'array'
+            'sections'=> 'array',
+            'created_at' => 'datetime:d/m/Y H:i',
         ];
     }
 

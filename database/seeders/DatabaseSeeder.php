@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             'user' => 'admin@tap.com',
             'name' => 'Administrador',
             'password' => Hash::make('password'),
+            'profiles' => ['users','products','profiles']
         ]);
     }
 }

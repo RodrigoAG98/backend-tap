@@ -46,7 +46,7 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "token": {
+                                        "access_token": {
                                             "type": "string",
                                             "example": "1|laravel_sanctum_token_here"
                                         },
@@ -704,6 +704,17 @@
                 ],
                 "summary": "Obtener todos los usuarios",
                 "operationId": "c457726701591d1183b53aa71fc13441",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "juanito"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con usuarios",
@@ -732,13 +743,19 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
+                                    "foto",
                                     "user",
-                                    "password"
+                                    "name"
                                 ],
                                 "properties": {
+                                    "foto": {
+                                        "description": "Imagen de perfil del usuario (máx. 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
                                     "user": {
                                         "type": "string",
                                         "format": "email",
@@ -748,14 +765,16 @@
                                         "type": "string",
                                         "example": "Rodrigo Aguilar"
                                     },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+52 2233445566",
+                                        "nullable": true
+                                    },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "secret123"
-                                    },
-                                    "telephone": {
-                                        "type": "string",
-                                        "example": "+52 2233445566"
+                                        "example": "secret123",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -764,8 +783,16 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Usuario almacenado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación en los campos enviados",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -830,12 +857,12 @@
                     }
                 ]
             },
-            "put": {
+            "post": {
                 "tags": [
                     "Users"
                 ],
-                "summary": "Actualizar registro de un usuario",
-                "operationId": "e29fc231c7937ab09483d35e6e3d1214",
+                "summary": "Actualizar registro de un usuario (usando POST spoofing para multipart)",
+                "operationId": "95753db5256786e7c465e72f5713d546",
                 "parameters": [
                     {
                         "name": "user",
@@ -851,13 +878,25 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
+                                    "_method",
                                     "user",
-                                    "password"
+                                    "name"
                                 ],
                                 "properties": {
+                                    "_method": {
+                                        "description": "Simulación de método HTTP para que Laravel procese la petición como PUT",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "foto": {
+                                        "description": "Nueva foto de perfil (opcional al actualizar, máx. 2MB)",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
                                     "user": {
                                         "type": "string",
                                         "format": "email",
@@ -867,14 +906,16 @@
                                         "type": "string",
                                         "example": "Rodrigo Aguilar"
                                     },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+52 2233445566",
+                                        "nullable": true
+                                    },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "secret123"
-                                    },
-                                    "telephone": {
-                                        "type": "string",
-                                        "example": "+52 2233445566"
+                                        "example": "secret123",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -884,7 +925,15 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Usuario actualizado",
+                        "description": "Usuario actualizado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación en los campos",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -990,7 +1039,7 @@
                                 "description": "Indica si se visualiza o se descarga el archivo",
                                 "schema": {
                                     "type": "string",
-                                    "example": "attachment; filename=\"users-14:30.pdf\""
+                                    "example": "inline; filename=\"users-14:30.pdf\""
                                 }
                             }
                         },
@@ -1005,6 +1054,49 @@
                     },
                     "401": {
                         "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{user}/avatar": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Obtener el avatar de un usuario",
+                "operationId": "245953e6ff26a50c6c418ac85d888932",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ULID del usuario",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "ulid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retorna avatar del usuario en base64",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
                     }
                 },
                 "security": [

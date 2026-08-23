@@ -13,10 +13,12 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::prefix('users')->name('users.')->controller(UserController::class)->group(function(){
+        Route::post('{user}','update')->name('update');
+        Route::get('{user}/avatar','avatar')->name('avatar');
         Route::get('export','export')->name('export');
         Route::get('pdf','pdf')->name('pdf');
     });
-    Route::apiResource('users',UserController::class);
+    Route::apiResource('users',UserController::class)->except('update');
     Route::prefix('products')->name('products.')->controller(ProductController::class)->group(function(){
         Route::get('export','export')->name('export');
         Route::get('pdf','pdf')->name('pdf');
