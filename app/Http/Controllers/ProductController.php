@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
-use Maatwebsite\Excel\Facades\Excel;
-use Carbon\Carbon;
 use App\Exports\GeneralExport;
-use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -20,6 +18,17 @@ class ProductController extends Controller
         tags: ['Products'],
         security: [
             ['bearerAuth' => []],
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -33,9 +42,12 @@ class ProductController extends Controller
             ),
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Product::get());
+        //obtenemos data filtrada según petición
+        $products = $this->getFilteredData($request);
+        //retornamos colección filtrada
+        return response()->json($products);
     }
 
     #[OA\Post(
@@ -84,20 +96,21 @@ class ProductController extends Controller
     )]
     public function store(Request $request)
     {
+        //validamos la data
         $data = $request->validate([
             'name' => 'required|string',
             'brand' => 'required|string',
             'price' => 'required|min:1|max:999',
         ]);
-
+        //creamos nuevo registro
         $newProduct = Product::create([
-            'product_code' => sprintf('%s-%s', now()->format('H:i'), Str::limit($data['name'], 2)),
+            'product_code' => bin2hex(random_bytes(5)),
             'name' => $data['name'],
             'brand' => $data['brand'],
             'price' => $data['price'],
         ]);
-
-        return response()->json($newProduct);
+        //retornamos mensaje
+        return response()->json('Producto almacenado exitosamente');
     }
 
     #[OA\Get(
@@ -138,6 +151,7 @@ class ProductController extends Controller
     )]
     public function show(Product $product)
     {
+        //retornamos modelo
         return response()->json($product);
     }
 
@@ -188,7 +202,7 @@ class ProductController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Usuario actualizado',
+                description: 'Producto actualizado',
                 content: new OA\JsonContent()
             ),
             new OA\Response(
@@ -197,25 +211,26 @@ class ProductController extends Controller
             ),
             new OA\Response(
                 response: 404,
-                description: 'Usuario no encontrado'
+                description: 'Producto no encontrado'
             ),
         ]
     )]
     public function update(Request $request, Product $product)
     {
+        //validación de la data
         $data = $request->validate([
             'name' => 'required|string',
             'brand' => 'required|string',
             'price' => 'required|min:1|max:999',
         ]);
-
+        //actualización del registro
         $product->update([
             'name' => $data['name'],
             'brand' => $data['brand'],
             'price' => $data['price'],
         ]);
-
-        return response()->json($product);
+        //retornamos mensaje
+        return response()->json('Producto actualizado');
     }
 
     #[OA\Delete(
@@ -254,8 +269,9 @@ class ProductController extends Controller
     )]
     public function destroy(Product $product)
     {
+        //guardamos mensaje antes de eliminar
         $msg = sprintf('Producto: %s eliminado', $product->name);
-
+        //borrrado lógico del modelo
         $product->delete();
 
         return response()->json($msg);
@@ -267,6 +283,17 @@ class ProductController extends Controller
         tags: ['Products'],
         security: [
             ['bearerAuth' => []],
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -286,11 +313,12 @@ class ProductController extends Controller
             ),
         ]
     )]
-    public function export()
+    public function export(Request $request)
     {
+        //Establecemos encabezados
         $headers = ['Código del producto', 'Nombre del producto', 'Precio', 'Fecha de creación'];
-
-        $products = Product::get()->map(function($product){
+        //Obtenemos data filtrada y mapeamos para poder leerla en el blade
+        $products = $this->getFilteredData($request)->map(function($product){
             return [
                 'product_code' => $product->product_code,
                 'name' => $product->name,
@@ -298,7 +326,7 @@ class ProductController extends Controller
                 'created_at' => Carbon::parse($product->created_at)->format('d/m/Y H:i'),
             ];
         })->toArray();
-
+        //retornamos excel
         return Excel::download(new GeneralExport($headers, $products), sprintf('productos-%s.xlsx',now()->format('H:i')));
     }
 
@@ -308,6 +336,17 @@ class ProductController extends Controller
         tags: ['Products'],
         security: [
             ['bearerAuth' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -334,16 +373,18 @@ class ProductController extends Controller
             )
         ]
     )]
-    public function pdf()
+    public function pdf(Request $request)
     {
+        //Armamos data para lectura en el blade del pdf
         $data = [
             'title' => 'Productos',
             'headers' => ['Código del producto', 'Nombre del producto', 'Precio', 'Fecha de creación'],
             'items' => []
         ];
+        //Ancho de encabezados según encabezados
         $data['width'] = 100 / count($data['headers']);
-
-        $data['items'] = Product::get()->map(function($product){
+        //obtenemos data filtrada y mapeamos a array
+        $data['items'] = $this->getFilteredData($request)->map(function($product){
             return [
                 'product_code' => $product->product_code,
                 'name' => $product->name,
@@ -351,9 +392,24 @@ class ProductController extends Controller
                 'created_at' => Carbon::parse($product->created_at)->format('d/m/Y H:i'),
             ];
         })->toArray();
-
+        //cramos pdf y le pasamos la data
         $pdf = Pdf::loadView('pdf', compact('data'));
-
+        //retornamos pdf
         return $pdf->stream(sprintf('productos-%s.pdf',now()->format('H:i')));
+    }
+
+    //Función que retorna una colección filtrandola
+    private function getFilteredData($request)
+    {
+        //Creamos nueva query
+        $products = Product::query();
+        //Si hay query en la petición filtramos
+        if($request->query('search')){
+            $products->where('product_code', 'like', $request->query('search'))
+                ->orWhere('name', 'like', $request->query('search'))
+                ->orWhere('brand', 'like', $request->query('search'));
+        }
+        //retornamos colección filtrada
+        return $products->get();
     }
 }

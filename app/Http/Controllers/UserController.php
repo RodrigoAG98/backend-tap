@@ -48,14 +48,10 @@ class UserController extends Controller
     )]
     public function index(Request $request)
     {
-        $users = User::query();
+        //Obtenemos colección filtrada
+        $users = $this->getFilteredData($request);
 
-        if($request->query('search')){
-            $users->where('user','like',"%".$request->query('search')."%")
-                ->orWhere('name','like',"%".$request->query('search')."%");
-        }
-
-        return response()->json($users->get());
+        return response()->json($users);
     }
 
     #[OA\Post(
@@ -126,6 +122,7 @@ class UserController extends Controller
     )]
     public function store(Request $request)
     {
+        //validación de la data
         $data = $request->validate([
             'foto' => 'required|file|max:2048',
             'user' => 'required|unique:users,user',
@@ -139,7 +136,7 @@ class UserController extends Controller
         ]);
         //Almacenamos foto
         $image = $request->file('foto')->store('avatar','public');
-
+        //Creamos nuevo usuario
         $newUser = User::create([
             'user_code' => bin2hex(random_bytes(5)),
             'photo_path' => $image,
@@ -148,9 +145,9 @@ class UserController extends Controller
             'telephone' => $request->input('telephone'),
             'password' => $request->input('password', Hash::make(sprintf('%s.%s', now()->format('Y'), strtolower($data['user'])))),
         ]);
-
+        //procesamos la imagen
         $this->processImage($newUser->photo_path);
-
+        //Retornamos mensaje
         return response()->json('Usuario Almacenado exitosamente');
     }
 
@@ -192,6 +189,7 @@ class UserController extends Controller
     )]
     public function show(User $user)
     {
+        //retorna un usuario
         return response()->json($user);
     }
 
@@ -285,6 +283,7 @@ class UserController extends Controller
     )]
     public function update(Request $request, User $user)
     {
+        //Validación de la data
         $data = $request->validate([
             'foto' => 'nullable|file|max:2048',
             'user' => ['required',Rule::unique('users')->ignore($user->id)],
@@ -294,16 +293,17 @@ class UserController extends Controller
             'user.required'=>'El usuario es obligatorio.',
             'name.required'=>'El nombre es obligatorio.'
         ]);
-
+        //Actualizamos el modelo
         $user->update([
             'user' => $data['user'],
             'name' => $data['name'],
             'telephone' => $request->input('telephone'),
         ]);
-
+        //Verificamos si hay foto
         if($request->file('foto')){
+            //Almacenamos la imagen
             $image = $request->file('foto')->store('avatar','public');
-
+            //Se envia a procesamiento la imagen
             $this->processImage($user->photo_path);
         }
 
@@ -347,8 +347,9 @@ class UserController extends Controller
     )]
     public function destroy(User $user)
     {
+        //guardamos el mensaje con el nombre antes de eliminar
         $msg = sprintf('Usuario: %s eliminado', $user->name);
-
+        //Eliminado lógico
         $user->delete();
 
         return response()->json($msg);
@@ -360,6 +361,17 @@ class UserController extends Controller
         tags: ['Users'],
         security: [
             ['bearerAuth' => []],
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -379,11 +391,12 @@ class UserController extends Controller
             ),
         ]
     )]
-    public function export()
+    public function export(Request $request)
     {
+        //Encabezados para export
         $headers = ['Código de usuario', 'Usuario', 'Nombre', 'Fecha de creación'];
-
-        $users = User::get()->map(function($user){
+        //Obtenemos colección y mapeamos a array para poder leerla en el blade del export
+        $users = $this->getFilteredData($request)->map(function($user){
             return [
                 'user_code' => $user->user_code,
                 'user' => $user->user,
@@ -391,7 +404,7 @@ class UserController extends Controller
                 'created_at' => $user->created_at,
             ];
         })->toArray();
-
+        //retornamos la descarga del archivo
         return Excel::download(new GeneralExport(headers: $headers, items: $users), sprintf('users-%s.xlsx',now()->format('H:i')));
     }
 
@@ -401,6 +414,17 @@ class UserController extends Controller
         tags: ['Users'],
         security: [
             ['bearerAuth' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -427,16 +451,18 @@ class UserController extends Controller
             )
         ]
     )]
-    public function pdf()
+    public function pdf(Request $request)
     {
+        //Armamos estructura para lectura desde el blade
         $data = [
             'title' => 'Usarios',
             'headers' => ['Código de usuario', 'Usuario', 'Nombre', 'Fecha de creación'],
             'items' => []
         ];
+        //Establecemos ancho según la cantidad de encabezados
         $data['width'] = 100 / count($data['headers']);
-
-        $data['items'] = User::get()->map(function($user){
+        //Obtenemos colección de usuarios y mapeamos para poder leer en el blade como array
+        $data['items'] = $this->getFilteredData($request)->map(function($user){
             return [
                 'user_code' => $user->user_code,
                 'user' => $user->user,
@@ -444,9 +470,9 @@ class UserController extends Controller
                 'created_at' => $user->created_at,
             ];
         })->toArray();
-
+        //Creamos pdf según vista
         $pdf = Pdf::loadView('pdf', compact('data'));
-
+        //retornamos un pdf
         return $pdf->stream(sprintf('users-%s.pdf',now()->format('H:i')));
     }
 
@@ -488,20 +514,37 @@ class UserController extends Controller
     )]
     public function avatar(User $user)
     {
+        //Obtención de imagen del disco
         $mime = Storage::disk('public')->mimeType($user->photo_path);
+        //Se convierte a base64 para poder visualizarla en el front
         $base64 = 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('public')->get($user->photo_path));
         return response()->json($base64);
     }
+
     //Función para optimizar imagen
     private function processImage(string $path)
     {
         $image = Image::read(Storage::disk('public')->get($path));
         //Reducimos su tamaño a máximo 150px de ancho
         $image->scaleDown(width: 150);
-
+        //Actualizamos imagen redimencionada
         Storage::disk('public')->put(
             $path,
             (string) $image->encode()
         );
+    }
+
+    //Función que retorna una colección filtrada
+    private function getFilteredData($request)
+    {
+        //se genera nueva query
+        $users = User::query();
+        //si hay query filtramos
+        if($request->query('search')){
+            $users->where('user','like',"%".$request->query('search')."%")
+                ->orWhere('name','like',"%".$request->query('search')."%");
+        }
+        //se retorna colección
+        return $users->get();
     }
 }

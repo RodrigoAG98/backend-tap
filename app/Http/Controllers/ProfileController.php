@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Profile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
-use Maatwebsite\Excel\Facades\Excel;
-use Carbon\Carbon;
 use App\Exports\GeneralExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProfileController extends Controller
 {
@@ -45,14 +44,10 @@ class ProfileController extends Controller
     )]
     public function index(Request $request)
     {
-        $profiles = Profile::query();
-
-        if($request->query('search')) {
-            $profiles->where('profile_code','like', '%'.$request->query('search').'%')
-                ->orWhere('name','like', '%'.$request->query('search').'%');
-        }
-
-        return response()->json($profiles->get());
+        //obtenemos colección filtrada
+        $profiles = $this->getFilteredData($request);
+        //retornamos colección
+        return response()->json($profiles);
     }
 
     #[OA\Post(
@@ -95,17 +90,18 @@ class ProfileController extends Controller
     )]
     public function store(Request $request)
     {
+        //validamos data
         $data = $request->validate([
             'name' => 'required|string',
             'sections' => 'nullable|array',
         ]);
-
+        //creamos nuevo registro
         $newProfile = Profile::create([
             'profile_code' => bin2hex(random_bytes(5)),
             'name' => $data['name'],
             'sections' => $data['sections'],
         ]);
-
+        //retornamos mensaje
         return response()->json('Usuario almacenado exitosamente');
     }
 
@@ -147,6 +143,7 @@ class ProfileController extends Controller
     )]
     public function show(Profile $profile)
     {
+        //retornamos modelo
         return response()->json($profile);
     }
 
@@ -206,16 +203,17 @@ class ProfileController extends Controller
     )]
     public function update(Request $request, Profile $profile)
     {
+        //validación de data
         $data = $request->validate([
             'name' => 'required|string',
             'sections' => 'nullable|array',
         ]);
-
+        //actualizamos el modelo
         $profile->update([
             'name' => $data['name'],
             'sections' => $data['sections'],
         ]);
-
+        //retornamos mensaje
         return response()->json('Perfil actualizado');
     }
 
@@ -256,10 +254,11 @@ class ProfileController extends Controller
     )]
     public function destroy(Profile $profile)
     {
+        //guardamos mensaje antes de eliminar
         $msg = sprintf('Perfil: %s eliminado');
-
+        //Borrado lógico
         $profile->delete();
-
+        //retornamos mensaje
         return response()->json($msg);
     }
 
@@ -269,6 +268,17 @@ class ProfileController extends Controller
         tags: ['Profiles'],
         security: [
             ['bearerAuth' => []],
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -288,18 +298,19 @@ class ProfileController extends Controller
             ),
         ]
     )]
-    public function export()
+    public function export(Request $request)
     {
+        //armamos encabezados
         $headers = ['Código del perfil', 'Nombre', 'Fecha de creación'];
-
-        $profiles = Profile::get()->map(function($profile){
+        //obtenemos data filtraday mapeamos a array
+        $profiles = $this->getFilteredData($request)->map(function($profile){
             return [
                 'profile_code' => $profile->profile_code,
                 'name' => $profile->name,
                 'created_at' => $profile->created_at,
             ];
         })->toArray();
-
+        //retornamos archivo de excel
         return Excel::download(new GeneralExport($headers, $profiles), sprintf('perfiles-%s.xlsx',now()->format('H:i')));
     }
 
@@ -309,6 +320,17 @@ class ProfileController extends Controller
         tags: ['Profiles'],
         security: [
             ['bearerAuth' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                description: 'string para realizar búsqueda',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    example: 'administrador'
+                )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -335,25 +357,41 @@ class ProfileController extends Controller
             )
         ]
     )]
-    public function pdf()
+    public function pdf(Request $request)
     {
+        //Armamos data para poder leer en el blade
         $data = [
             'title' => 'Perfiles',
             'headers' => ['Código del perfil', 'Nombre', 'Fecha de creación'],
             'items' => []
         ];
+        //Establecemos ancho según encabezados
         $data['width'] = 100 / count($data['headers']);
-
-         $data['items'] = Profile::get()->map(function($profile){
+        //Obtenemos data filtrada y mapeamos a arrar
+        $data['items'] = $this->getFilteredData($request)->map(function($profile){
             return [
                 'profile_code' => $profile->profile_code,
                 'name' => $profile->name,
                 'created_at' => $profile->created_at,
             ];
         })->toArray();
-
+        //Creamos pdf y pasamos data
         $pdf = Pdf::loadView('pdf', compact('data'));
-
+        //retornamos pdf
         return $pdf->stream(sprintf('perfiles-%s.pdf',now()->format('H:i')));
+    }
+
+    //Funcion que retorna una colección filtrada
+    private function getFilteredData($request)
+    {
+        //se genera una nueva query
+        $profiles = Profile::query();
+        //si en la petición esta search se aplica filtro
+        if($request->query('search')) {
+            $profiles->where('profile_code','like', '%'.$request->query('search').'%')
+                ->orWhere('name','like', '%'.$request->query('search').'%');
+        }
+        //retornamos colección ya filtrada.
+        return $profiles->get();
     }
 }
