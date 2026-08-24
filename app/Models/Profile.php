@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
 use MongoDB\Laravel\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Profile extends Model
 {
-    use SoftDeletes, HasRoles;
+    use SoftDeletes, HasRoles, LogsActivity;
 
     protected $connection = 'mongodb';
     protected $collection = 'profiles';
@@ -41,5 +43,13 @@ class Profile extends Model
                 $profile->id = (string) str()->ulid();
             }
         });
+    }
+
+    //Función necesaria para guardar automáticamente los cambios sobre el modelo
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['*'])
+            ->logOnlyDirty();
     }
 }

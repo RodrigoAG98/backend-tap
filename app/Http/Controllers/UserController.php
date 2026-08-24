@@ -66,7 +66,7 @@ class UserController extends Controller
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['foto', 'user', 'name'],
+                    required: ['foto', 'user', 'name', 'profiles'],
                     properties: [
                         new OA\Property(
                             property: 'foto',
@@ -97,6 +97,12 @@ class UserController extends Controller
                             format: 'password',
                             nullable: true,
                             example: 'secret123'
+                        ),
+                        new OA\Property(
+                            property: 'profiles',
+                            type: 'array',
+                            items: new OA\Items(type: 'string'),
+                            example: ['Administrador','Empleado']
                         ),
                     ]
                 )
@@ -129,6 +135,8 @@ class UserController extends Controller
             'name' => 'required|string',
             'telephone' => 'nullable|phone:INTERNATIONAL',
             'password' => 'sometimes|string',
+            'profiles' => 'required|array|min:1',
+            'profiles.*' => 'exists:profiles,id',
         ],[
             'user.required'=>'El usuario es obligatorio.',
             'name.required'=>'El nombre es obligatorio.',
@@ -144,6 +152,7 @@ class UserController extends Controller
             'name' => $data['name'],
             'telephone' => $request->input('telephone'),
             'password' => $request->input('password', Hash::make(sprintf('%s.%s', now()->format('Y'), strtolower($data['user'])))),
+            'profiles' => $data['profiles'],
         ]);
         //procesamos la imagen
         $this->processImage($newUser->photo_path);
@@ -217,7 +226,7 @@ class UserController extends Controller
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['_method', 'user', 'name'],
+                    required: ['_method', 'user', 'name','profiles'],
                     properties: [
                         new OA\Property(
                             property: '_method',
@@ -256,6 +265,12 @@ class UserController extends Controller
                             nullable: true,
                             example: 'secret123'
                         ),
+                        new OA\Property(
+                            property: 'profiles',
+                            type: 'array',
+                            items: new OA\Items(type: 'string'),
+                            example: ['Administrador','Empleado']
+                        ),
                     ]
                 )
             )
@@ -289,6 +304,8 @@ class UserController extends Controller
             'user' => ['required',Rule::unique('users')->ignore($user->id)],
             'name' => 'required|string',
             'telephone' => 'nullable|phone:INTERNATIONAL',
+            'profiles' => 'required|array|min:1',
+            'profiles.*' => 'exists:profiles,id',
         ],[
             'user.required'=>'El usuario es obligatorio.',
             'name.required'=>'El nombre es obligatorio.'
@@ -298,6 +315,7 @@ class UserController extends Controller
             'user' => $data['user'],
             'name' => $data['name'],
             'telephone' => $request->input('telephone'),
+            'profiles' => $data['profiles'],
         ]);
         //Verificamos si hay foto
         if($request->file('foto')){
@@ -347,10 +365,14 @@ class UserController extends Controller
     )]
     public function destroy(User $user)
     {
-        //guardamos el mensaje con el nombre antes de eliminar
-        $msg = sprintf('Usuario: %s eliminado', $user->name);
-        //Eliminado lógico
-        $user->delete();
+         $msg = sprintf('Usuario: %s no es posible eliminar', $user->name);
+        //Validación para evitar que eliminen al admin
+        if ($user->id !== User::first()?->id) {
+            //guardamos el mensaje con el nombre antes de eliminar
+            $msg = sprintf('Usuario: %s eliminado', $user->name);
+            //Eliminado lógico
+            $user->delete();
+        }
 
         return response()->json($msg);
     }
@@ -514,10 +536,15 @@ class UserController extends Controller
     )]
     public function avatar(User $user)
     {
-        //Obtención de imagen del disco
-        $mime = Storage::disk('public')->mimeType($user->photo_path);
-        //Se convierte a base64 para poder visualizarla en el front
-        $base64 = 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('public')->get($user->photo_path));
+        $base64 = '';
+
+        if(!empty($user->photo_path)){
+            //Obtención de imagen del disco
+            $mime = Storage::disk('public')->mimeType($user->photo_path);
+            //Se convierte a base64 para poder visualizarla en el front
+            $base64 = 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('public')->get($user->photo_path));
+        }
+        
         return response()->json($base64);
     }
 

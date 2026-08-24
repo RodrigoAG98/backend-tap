@@ -17,6 +17,7 @@
         "maatwebsite/excel": "^3.1",
         "mongodb/laravel-mongodb": "^5.8",
         "propaganistas/laravel-phone": "^6.0",
+        "spatie/laravel-activitylog": "^4.0",
         "spatie/laravel-permission": "^6.0"
     },
     "require-dev": {
