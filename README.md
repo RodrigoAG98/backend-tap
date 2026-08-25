@@ -1,3 +1,25 @@
+## Backend(API) para el Sistema de Admisión Terminal Portuaria
+
+1. Instalar dependecias
+
+```bash
+composer install
+```
+
+2. Ejecutar migraciones y seeder
+
+```bash
+php artisan migrate && php artisan db:seed
+```
+
+Para el desarrollo se utilizaron los siguientes paquetes/dependencias:
+
+- [Laravel DOMPDF](https://github.com/barryvdh/laravel-dompdf).
+- [Intervention Image](https://github.com/Intervention/image-laravel).
+- [Laravel Excel](https://github.com/SpartnerNL/laravel-excel).
+- [Laravel Phone](https://github.com/propaganistas/laravel-phone).
+- [Laravel Activity Log](https://github.com/spatie/laravel-activitylog).
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
