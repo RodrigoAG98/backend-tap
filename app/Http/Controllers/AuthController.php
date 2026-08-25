@@ -69,7 +69,7 @@ class AuthController extends Controller
         $permissions = collect();
         //obtener perfiles del usuario
         $profiles = Profile::whereIn('id',$user->profiles)->get();
-        if ($profiles->isNotEmpty) {
+        if ($profiles->isNotEmpty()) {
             //obtenemos los id de la colección y convertimos a array
             $permissions = $profiles->pluck('sections')->toArray();
         }
