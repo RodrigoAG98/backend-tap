@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Permission;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -29,4 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('pdf','pdf')->name('pdf');
     });
     Route::apiResource('profiles',ProfileController::class);
+    Route::get('permissions', function(){
+        return response()->json(Permission::get());
+    })->name('permissions');
 });

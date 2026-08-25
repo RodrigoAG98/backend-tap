@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
@@ -65,9 +66,18 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $permissions = collect();
+        //obtener perfiles del usuario
+        $profiles = Profile::whereIn('id',$user->profiles)->get();
+        if ($profiles->isNotEmpty) {
+            //obtenemos los id de la colección y convertimos a array
+            $permissions = $profiles->pluck('sections')->toArray();
+        }
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'permissions' => $permissions
         ]);
     }
 

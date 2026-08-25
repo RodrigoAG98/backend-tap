@@ -93,7 +93,10 @@ class ProfileController extends Controller
         //validamos data
         $data = $request->validate([
             'name' => 'required|string',
-            'sections' => 'nullable|array',
+            'sections' => 'required|min:1',
+            'sections.*' => 'exists:permissions,id',
+        ], [
+            'sections.*.exists'=>'El permiso no existe'
         ]);
         //creamos nuevo registro
         $newProfile = Profile::create([

@@ -28,7 +28,7 @@ class Profile extends Model
 
     protected function casts(): array
     {
-        //Al consultar desde el modelo se castea de data
+        //Al consultar desde el modelo se castea la data
         return [
             'sections'=> 'array',
             'created_at' => 'datetime:d/m/Y H:i',
