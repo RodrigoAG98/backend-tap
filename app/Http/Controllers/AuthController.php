@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Profile;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use OpenApi\Attributes as OA;
@@ -71,7 +72,9 @@ class AuthController extends Controller
         $profiles = Profile::whereIn('id',$user->profiles)->get();
         if ($profiles->isNotEmpty()) {
             //obtenemos los id de la colección y convertimos a array
-            $permissions = $profiles->pluck('sections')->toArray();
+            $permissions = $profiles->pluck('sections')->flatten()->toArray();
+            //Después obtenemos los permisos(names)
+            $permissions = Permission::whereIn('id',$permissions)->get()->pluck('name')->toArray();
         }
 
         return response()->json([
