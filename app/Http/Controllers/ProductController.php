@@ -26,7 +26,7 @@ class ProductController extends Controller
                 in: 'query',
                 schema: new OA\Schema(
                     type: 'string',
-                    example: 'administrador'
+                    example: ''
                 )
             ),
         ],
@@ -34,7 +34,20 @@ class ProductController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Respuesta con productos',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'product_code', type: 'string', example: '1b815f15c2'),
+                            new OA\Property(property: 'name', type: 'string', example: 'RAV4 SUV'),
+                            new OA\Property(property: 'brand', type: 'string', example: "Toyota"),
+                            new OA\Property(property: 'price', type: 'integer', example: 600),
+                            new OA\Property(property: 'created_at', type: 'string', example: '24/08/2026 20:42'),
+                            new OA\Property(property: 'updated_at', type: 'string', example: '2026-08-24T20:42:31.581000Z'),
+                            new OA\Property(property: 'id', type: 'string', example: '01M0TR5AKZM7CBF8PGF9EHSJ7G'),
+                        ]
+                    )
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -86,7 +99,10 @@ class ProductController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Producto almacenado exitosamente',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                     type: 'string',
+                    example: 'Producto almacenado exitosamente'
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -203,7 +219,10 @@ class ProductController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Producto actualizado',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Producto actualizado'
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -255,7 +274,11 @@ class ProductController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Producto eliminado'
+                description: 'Producto eliminado',
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Producto {producto} eliminado'
+                )
             ),
             new OA\Response(
                 response: 401,

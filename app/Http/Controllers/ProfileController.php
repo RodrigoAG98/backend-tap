@@ -26,7 +26,7 @@ class ProfileController extends Controller
                 in: 'query',
                 schema: new OA\Schema(
                     type: 'string',
-                    example: 'administrador'
+                    example: ''
                 )
             ),
         ],
@@ -34,7 +34,19 @@ class ProfileController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Respuesta con pefiles',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'profile_code', type: 'string', example: '1b815f15c2'),
+                            new OA\Property(property: 'name', type: 'string', example: 'Administrador'),
+                            new OA\Property(property: 'sections', type: 'array', example: "['id1','id2']"),
+                            new OA\Property(property: 'created_at', type: 'string', example: '24/08/2026 20:42'),
+                            new OA\Property(property: 'updated_at', type: 'string', example: '2026-08-24T20:42:31.581000Z'),
+                            new OA\Property(property: 'id', type: 'string', example: '01M0TR5AKZM7CBF8PGF9EHSJ7G'),
+                        ]
+                    )
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -60,7 +72,7 @@ class ProfileController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['name', 'sections'],
+                required: ['name', 'sections[]'],
                 properties: [
                     new OA\Property(
                         property: 'name',
@@ -68,7 +80,7 @@ class ProfileController extends Controller
                         example: 'Administrador'
                     ),
                     new OA\Property(
-                        property: 'sections',
+                        property: 'sections[]',
                         type: 'array',
                         items: new OA\Items(type: 'string'),
                         example: ['Users','Products','Profiles']
@@ -80,7 +92,10 @@ class ProfileController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Perfil almacenado exitosamente',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Perfil almacenado exitosamente'
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -172,7 +187,7 @@ class ProfileController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['name', 'sections'],
+                required: ['name', 'sections[]'],
                 properties: [
                     new OA\Property(
                         property: 'name',
@@ -180,7 +195,7 @@ class ProfileController extends Controller
                         example: 'Administrador'
                     ),
                     new OA\Property(
-                        property: 'sections',
+                        property: 'sections[]',
                         type: 'array',
                         items: new OA\Items(type: 'string'),
                         example: ['Users','Products','Profiles']
@@ -192,7 +207,10 @@ class ProfileController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Perfil actualizado',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Perfil actualizado'
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -243,7 +261,10 @@ class ProfileController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Perfil eliminado',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Perfil {perfil} eliminado'
+                )
             ),
             new OA\Response(
                 response: 401,

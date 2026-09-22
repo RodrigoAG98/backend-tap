@@ -30,7 +30,7 @@ class UserController extends Controller
                 in: 'query',
                 schema: new OA\Schema(
                     type: 'string',
-                    example: 'juanito'
+                    example: ''
                 )
             ),
         ],
@@ -38,7 +38,20 @@ class UserController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Respuesta con usuarios',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'user_code', type: 'string', example: '1b815f15c2'),
+                            new OA\Property(property: 'user', type: 'string', example: 'admin@tap.com'),
+                            new OA\Property(property: 'name', type: 'string', example: 'Administrador'),
+                            new OA\Property(property: 'email', type: 'string', example: 'admin@example.com'),
+                            new OA\Property(property: 'created_at', type: 'string', example: '24/08/2026 20:42'),
+                            new OA\Property(property: 'updated_at', type: 'string', example: '2026-08-24T20:42:31.581000Z'),
+                            new OA\Property(property: 'id', type: 'string', example: '01M0TR5AKZM7CBF8PGF9EHSJ7G'),
+                        ]
+                    )
+                )
             ),
             new OA\Response(
                 response: 401,
@@ -66,7 +79,7 @@ class UserController extends Controller
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['foto', 'user', 'name', 'profiles'],
+                    required: ['foto', 'user', 'name', 'profiles[]'],
                     properties: [
                         new OA\Property(
                             property: 'foto',
@@ -99,20 +112,30 @@ class UserController extends Controller
                             example: 'secret123'
                         ),
                         new OA\Property(
-                            property: 'profiles',
+                            property: 'profiles[]',
                             type: 'array',
-                            items: new OA\Items(type: 'string'),
-                            example: ['Administrador','Empleado']
+                            items: new OA\Items(type: 'string', example: 'id_profile'),
+                            example: ['id_profile']
                         ),
                     ]
-                )
+                ),
+                encoding: [
+                    new OA\Encoding(
+                        property: 'profiles',
+                        style: 'form',
+                        explode: true
+                    )
+                ]
             )
         ),
         responses: [
             new OA\Response(
                 response: 201,
                 description: 'Usuario almacenado exitosamente',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Usuario Almacenado exitosamente'
+                )
             ),
             new OA\Response(
                 response: 422,
@@ -226,14 +249,8 @@ class UserController extends Controller
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['_method', 'user', 'name','profiles'],
+                    required: ['_method', 'user', 'name','profiles[]'],
                     properties: [
-                        new OA\Property(
-                            property: '_method',
-                            description: 'Simulación de método HTTP para que Laravel procese la petición como PUT',
-                            type: 'string',
-                            example: 'PUT'
-                        ),
                         new OA\Property(
                             property: 'foto',
                             description: 'Nueva foto de perfil (opcional al actualizar, máx. 2MB)',
@@ -266,10 +283,10 @@ class UserController extends Controller
                             example: 'secret123'
                         ),
                         new OA\Property(
-                            property: 'profiles',
+                            property: 'profiles[]',
                             type: 'array',
                             items: new OA\Items(type: 'string'),
-                            example: ['Administrador','Empleado']
+                            example: ['id_profile']
                         ),
                     ]
                 )
@@ -279,7 +296,10 @@ class UserController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Usuario actualizado exitosamente',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Usuario actualizado exitosamente'
+                )
             ),
             new OA\Response(
                 response: 422,
@@ -351,7 +371,10 @@ class UserController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Usuario eliminado',
-                content: new OA\JsonContent()
+                content: new OA\JsonContent(
+                    type: 'string',
+                    example: 'Usuario {usuario} eliminado'
+                )
             ),
             new OA\Response(
                 response: 401,

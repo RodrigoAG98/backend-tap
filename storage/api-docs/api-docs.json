@@ -97,6 +97,17 @@
                 ],
                 "summary": "Obtener todos los productos",
                 "operationId": "1bfaa78d1c2c3848ab8165c5dadcad3e",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": ""
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con productos",
@@ -266,7 +277,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Usuario actualizado",
+                        "description": "Producto actualizado",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -277,7 +288,7 @@
                         "description": "No autorizado"
                     },
                     "404": {
-                        "description": "Usuario no encontrado"
+                        "description": "Producto no encontrado"
                     }
                 },
                 "security": [
@@ -329,6 +340,17 @@
                 ],
                 "summary": "Exportar todos los productos",
                 "operationId": "7b9b9c6510497057c88db820f281b66d",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con productos en un xlsx",
@@ -359,6 +381,17 @@
                 ],
                 "summary": "Exportar o visualizar productos en formato PDF",
                 "operationId": "627a36218e6f4b3cb8e7d0fcb960894d",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Documento PDF generado exitosamente",
@@ -405,7 +438,7 @@
                         "description": "string para realizar búsqueda",
                         "schema": {
                             "type": "string",
-                            "example": "administrador"
+                            "example": ""
                         }
                     }
                 ],
@@ -646,6 +679,17 @@
                 ],
                 "summary": "Exportar todos los perfiles",
                 "operationId": "31b31191b1fcda948aa85a1e2168f029",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con usuarios en un xlsx",
@@ -676,6 +720,17 @@
                 ],
                 "summary": "Exportar o visualizar perfiles en formato PDF",
                 "operationId": "ddd7c5cc1b477f1ae3bbc44b6e1c5e8e",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Documento PDF generado exitosamente",
@@ -722,7 +777,7 @@
                         "description": "string para realizar búsqueda",
                         "schema": {
                             "type": "string",
-                            "example": "juanito"
+                            "example": ""
                         }
                     }
                 ],
@@ -731,7 +786,42 @@
                         "description": "Respuesta con usuarios",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "user_code": {
+                                                "type": "string",
+                                                "example": "1b815f15c2"
+                                            },
+                                            "user": {
+                                                "type": "string",
+                                                "example": "admin@tap.com"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Administrador"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "admin@example.com"
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "example": "24/08/2026 20:42"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "example": "2026-08-24T20:42:31.581000Z"
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "example": "01M0TR5AKZM7CBF8PGF9EHSJ7G"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
                             }
                         }
                     },
@@ -759,7 +849,8 @@
                                 "required": [
                                     "foto",
                                     "user",
-                                    "name"
+                                    "name",
+                                    "profiles[]"
                                 ],
                                 "properties": {
                                     "foto": {
@@ -786,9 +877,25 @@
                                         "format": "password",
                                         "example": "secret123",
                                         "nullable": true
+                                    },
+                                    "profiles[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "id_profile"
+                                        },
+                                        "example": [
+                                            "id_profile"
+                                        ]
                                     }
                                 },
                                 "type": "object"
+                            },
+                            "encoding": {
+                                "profiles": {
+                                    "style": "form",
+                                    "explode": true
+                                }
                             }
                         }
                     }
@@ -798,7 +905,10 @@
                         "description": "Usuario almacenado exitosamente",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Usuario Almacenado exitosamente"
                             }
                         }
                     },
@@ -894,7 +1004,8 @@
                                 "required": [
                                     "_method",
                                     "user",
-                                    "name"
+                                    "name",
+                                    "profiles[]"
                                 ],
                                 "properties": {
                                     "_method": {
@@ -927,6 +1038,15 @@
                                         "format": "password",
                                         "example": "secret123",
                                         "nullable": true
+                                    },
+                                    "profiles[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "id_profile"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -1012,6 +1132,17 @@
                 ],
                 "summary": "Exportar todos los usuarios",
                 "operationId": "e42afb9269abfcc3af1306d459d31542",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Respuesta con usuarios en un xlsx",
@@ -1042,6 +1173,17 @@
                 ],
                 "summary": "Exportar o visualizar usuarios en formato PDF",
                 "operationId": "8b0516f9613f9754d1e48b52ef186354",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "string para realizar búsqueda",
+                        "schema": {
+                            "type": "string",
+                            "example": "administrador"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Documento PDF generado exitosamente",
