@@ -40,7 +40,12 @@ class ProfileController extends Controller
                         properties: [
                             new OA\Property(property: 'profile_code', type: 'string', example: '1b815f15c2'),
                             new OA\Property(property: 'name', type: 'string', example: 'Administrador'),
-                            new OA\Property(property: 'sections', type: 'array', example: "['id1','id2']"),
+                            new OA\Property(
+                                property: 'sections', 
+                                type: 'array', 
+                                items: new OA\Items(type: 'string'), 
+                                example: ['id1', 'id2']
+                            ),
                             new OA\Property(property: 'created_at', type: 'string', example: '24/08/2026 20:42'),
                             new OA\Property(property: 'updated_at', type: 'string', example: '2026-08-24T20:42:31.581000Z'),
                             new OA\Property(property: 'id', type: 'string', example: '01M0TR5AKZM7CBF8PGF9EHSJ7G'),

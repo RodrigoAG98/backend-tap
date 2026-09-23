@@ -113,7 +113,42 @@
                         "description": "Respuesta con productos",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "product_code": {
+                                                "type": "string",
+                                                "example": "1b815f15c2"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "RAV4 SUV"
+                                            },
+                                            "brand": {
+                                                "type": "string",
+                                                "example": "Toyota"
+                                            },
+                                            "price": {
+                                                "type": "integer",
+                                                "example": 600
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "example": "24/08/2026 20:42"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "example": "2026-08-24T20:42:31.581000Z"
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "example": "01M0TR5AKZM7CBF8PGF9EHSJ7G"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
                             }
                         }
                     },
@@ -169,7 +204,10 @@
                         "description": "Producto almacenado exitosamente",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Producto almacenado exitosamente"
                             }
                         }
                     },
@@ -280,7 +318,10 @@
                         "description": "Producto actualizado",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Producto actualizado"
                             }
                         }
                     },
@@ -317,7 +358,15 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Producto eliminado"
+                        "description": "Producto eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Producto {producto} eliminado"
+                            }
+                        }
                     },
                     "401": {
                         "description": "No autorizado"
@@ -447,7 +496,44 @@
                         "description": "Respuesta con pefiles",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "profile_code": {
+                                                "type": "string",
+                                                "example": "1b815f15c2"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Administrador"
+                                            },
+                                            "sections": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "example": [
+                                                    "id1",
+                                                    "id2"
+                                                ]
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "example": "24/08/2026 20:42"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "example": "2026-08-24T20:42:31.581000Z"
+                                            },
+                                            "id": {
+                                                "type": "string",
+                                                "example": "01M0TR5AKZM7CBF8PGF9EHSJ7G"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
                             }
                         }
                     },
@@ -474,14 +560,14 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "sections"
+                                    "sections[]"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
                                         "example": "Administrador"
                                     },
-                                    "sections": {
+                                    "sections[]": {
                                         "type": "array",
                                         "items": {
                                             "type": "string"
@@ -503,7 +589,10 @@
                         "description": "Perfil almacenado exitosamente",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Perfil almacenado exitosamente"
                             }
                         }
                     },
@@ -585,14 +674,14 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "sections"
+                                    "sections[]"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
                                         "example": "Administrador"
                                     },
-                                    "sections": {
+                                    "sections[]": {
                                         "type": "array",
                                         "items": {
                                             "type": "string"
@@ -614,7 +703,10 @@
                         "description": "Perfil actualizado",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Perfil actualizado"
                             }
                         }
                     },
@@ -654,7 +746,10 @@
                         "description": "Perfil eliminado",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Perfil {perfil} eliminado"
                             }
                         }
                     },
@@ -1008,11 +1103,6 @@
                                     "profiles[]"
                                 ],
                                 "properties": {
-                                    "_method": {
-                                        "description": "Simulación de método HTTP para que Laravel procese la petición como PUT",
-                                        "type": "string",
-                                        "example": "PUT"
-                                    },
                                     "foto": {
                                         "description": "Nueva foto de perfil (opcional al actualizar, máx. 2MB)",
                                         "type": "string",
@@ -1059,7 +1149,10 @@
                         "description": "Usuario actualizado exitosamente",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Usuario actualizado exitosamente"
                             }
                         }
                     },
@@ -1107,7 +1200,10 @@
                         "description": "Usuario eliminado",
                         "content": {
                             "application/json": {
-                                "schema": {}
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Usuario {usuario} eliminado"
                             }
                         }
                     },
