@@ -258,7 +258,7 @@ class ProfileController extends Controller
                 required: true,
                 schema: new OA\Schema(
                     type: 'string',
-                    example: '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+                    example: ''
                 )
             ),
         ],
@@ -284,7 +284,7 @@ class ProfileController extends Controller
     public function destroy(Profile $profile)
     {
         //guardamos mensaje antes de eliminar
-        $msg = sprintf('Perfil: %s eliminado');
+        $msg = sprintf('Perfil: %s eliminado', $profile->name);
         //Borrado lógico
         $profile->delete();
         //retornamos mensaje
