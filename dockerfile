@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.5-apache
 
 # Instalar dependencias del sistema requeridas (incluyendo soporte para GD, ZIP y MongoDB)
 RUN apt-get update && apt-get install -y \
